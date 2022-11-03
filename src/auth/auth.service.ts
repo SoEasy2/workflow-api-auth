@@ -1,5 +1,5 @@
-import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
-import { ClientKafka } from '@nestjs/microservices';
+import { HttpStatus, Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { ClientKafka, RpcException } from '@nestjs/microservices';
 import { User } from './entities/User';
 import { CreateUserDto } from './dto/create-user-dto';
 import { TOPIC_USER_CREATE } from '../common/constants';
@@ -16,12 +16,17 @@ export class AuthService implements OnModuleInit {
     });
     await this.clientUser.connect();
   }
-  async registerUser(createUserDto: CreateUserDto): Promise<User> {
-    return new Promise<User>((resolve, reject) => {
+  async registerUser(createUserDto: CreateUserDto): Promise<any> {
+    console.log('BEFORE CHECK');
+    //  return this.clientUser.send(TOPIC_USER_CREATE, { ...createUserDto });
+    return new Promise((resolve, reject) => {
       this.clientUser.send(TOPIC_USER_CREATE, { ...createUserDto }).subscribe({
-        next: (response) => resolve(response),
+        next: (response) => {
+          console.log('RESPONSE', response);
+          resolve(response);
+        },
         error: (error) => {
-          console.log('ERROR');
+          console.log('ERORR');
           reject(error);
         },
       });

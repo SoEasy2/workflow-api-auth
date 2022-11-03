@@ -3,6 +3,7 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { AppLogger } from '../shared/logger/logger.service';
+import { v4 as uuidv4 } from 'uuid';
 
 @Module({
   imports: [
@@ -12,11 +13,12 @@ import { AppLogger } from '../shared/logger/logger.service';
         transport: Transport.KAFKA,
         options: {
           client: {
-            clientId: 'users',
+            clientId: 'auth-service',
             brokers: ['kafka:9092'],
           },
           consumer: {
-            groupId: 'users-consumer',
+            groupId: `users-consumer-${uuidv4()}`,
+            rebalanceTimeout: 10000,
           },
         },
       },
