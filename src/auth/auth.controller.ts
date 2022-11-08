@@ -15,6 +15,7 @@ import {
 import { IKafkaMessage } from '../common/interfaces/kafka-message.interface';
 import { CreateUserDto } from './dto/create-user-dto';
 import { ExceptionFilter } from '../exceptions/rpc-exception.filter';
+import { IResponseAuth } from './interfaces/response-auth.interface';
 
 @UseFilters(new ExceptionFilter())
 @UsePipes(new ValidationPipe({ transform: true }))
@@ -29,9 +30,8 @@ export class AuthController {
   @MessagePattern(TOPIC_AUTH_REGISTER)
   async registerUser(
     @Payload() message: IKafkaMessage<CreateUserDto>,
-  ): Promise<User> {
+  ): Promise<IResponseAuth> {
     try {
-      console.log('message', message);
       this.appLogger.log(
         `[AuthController][${TOPIC_AUTH_REGISTER}] -> [registerUser]`,
       );
@@ -43,7 +43,7 @@ export class AuthController {
         err.stack,
         `[AuthController][${TOPIC_AUTH_REGISTER}] -> [registerUser]`,
       );
-      throw new RpcException("TEST ERR");
+      throw new RpcException(JSON.stringify(err));
     }
   }
   @EventPattern(TOPIC_AUTH_REGISTER_REPLY)

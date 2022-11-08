@@ -4,6 +4,7 @@ import { AuthController } from './auth.controller';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { AppLogger } from '../shared/logger/logger.service';
 import { v4 as uuidv4 } from 'uuid';
+import { JwtService } from './jwt.service';
 
 @Module({
   imports: [
@@ -24,7 +25,7 @@ import { v4 as uuidv4 } from 'uuid';
       },
     ]),
   ],
-  providers: [AuthService, AppLogger],
+  providers: [AuthService, AppLogger, JwtService],
   controllers: [AuthController],
 })
 export class AuthModule {}

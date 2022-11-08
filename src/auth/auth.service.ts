@@ -1,13 +1,17 @@
-import { HttpStatus, Inject, Injectable, OnModuleInit } from '@nestjs/common';
-import { ClientKafka, RpcException } from '@nestjs/microservices';
-import { User } from './entities/User';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { ClientKafka } from '@nestjs/microservices';
 import { CreateUserDto } from './dto/create-user-dto';
 import { TOPIC_USER_CREATE } from '../common/constants';
+import { JwtService } from './jwt.service';
+import { IResponseAuth } from './interfaces/response-auth.interface';
+import { User } from './entities/User';
+import { IToken } from './interfaces/token.interface';
 
 @Injectable()
 export class AuthService implements OnModuleInit {
   constructor(
     @Inject('USERS_SERVICE') private readonly clientUser: ClientKafka,
+    private readonly jwtService: JwtService,
   ) {}
   async onModuleInit() {
     const topics: Array<string> = [TOPIC_USER_CREATE];
@@ -16,20 +20,14 @@ export class AuthService implements OnModuleInit {
     });
     await this.clientUser.connect();
   }
-  async registerUser(createUserDto: CreateUserDto): Promise<any> {
-    console.log('BEFORE CHECK');
-    //  return this.clientUser.send(TOPIC_USER_CREATE, { ...createUserDto });
-    return new Promise((resolve, reject) => {
+  async registerUser(createUserDto: CreateUserDto): Promise<IResponseAuth> {
+    const user = await new Promise<User>((resolve, reject) => {
       this.clientUser.send(TOPIC_USER_CREATE, { ...createUserDto }).subscribe({
-        next: (response) => {
-          console.log('RESPONSE', response);
-          resolve(response);
-        },
-        error: (error) => {
-          console.log('ERORR');
-          reject(error);
-        },
+        next: (response) => resolve(response),
+        error: (error) => reject(error),
       });
     });
+    const tokens = this.jwtService.generateTokens(user);
+    return { user, tokens };
   }
 }
