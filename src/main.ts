@@ -30,5 +30,8 @@ async function bootstrap() {
   app.enableShutdownHooks();
 
   await app.listen();
+
 }
-bootstrap();
+bootstrap().then(() => {
+  console.log('Auth service is running');
+});
