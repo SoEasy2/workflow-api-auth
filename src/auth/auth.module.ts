@@ -24,6 +24,22 @@ import { JwtService } from './jwt.service';
         },
       },
     ]),
+    ClientsModule.register([
+      {
+        name: 'MAILER_SERVICE',
+        transport: Transport.KAFKA,
+        options: {
+          client: {
+            clientId: 'mailer-service',
+            brokers: ['kafka:9092'],
+          },
+          consumer: {
+            groupId: `mailer-consumer-${uuidv4()}`,
+            rebalanceTimeout: 10000,
+          },
+        },
+      },
+    ]),
   ],
   providers: [AuthService, AppLogger, JwtService],
   controllers: [AuthController],
