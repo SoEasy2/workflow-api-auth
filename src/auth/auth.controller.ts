@@ -10,12 +10,13 @@ import {
 } from '@nestjs/microservices';
 import {
   TOPIC_AUTH_REGISTER,
-  TOPIC_AUTH_REGISTER_REPLY,
+  TOPIC_AUTH_REGISTER_REPLY, TOPIC_AUTH_VERIFICATION, TOPIC_AUTH_VERIFICATION_REPLY,
 } from '../common/constants';
 import { IKafkaMessage } from '../common/interfaces/kafka-message.interface';
 import { CreateUserDto } from './dto/create-user-dto';
 import { ExceptionFilter } from '../exceptions/rpc-exception.filter';
 import { IResponseAuth } from './interfaces/response-auth.interface';
+import { VerificationUserDto } from './dto/verification-user-dto';
 
 @UseFilters(new ExceptionFilter())
 @UsePipes(new ValidationPipe({ transform: true }))
@@ -37,7 +38,6 @@ export class AuthController {
       );
       return await this.authService.registerUser(message.value);
     } catch (err) {
-      console.log('ERROR', err);
       this.appLogger.error(
         err,
         err.stack,
@@ -50,6 +50,32 @@ export class AuthController {
   async logRegisterUser(): Promise<void> {
     this.appLogger.log(
       `[AuthController][${TOPIC_AUTH_REGISTER}][SEND] -> [registerUser]`,
+    );
+  }
+
+  @MessagePattern()
+
+  @MessagePattern(TOPIC_AUTH_VERIFICATION)
+  async verificationUser(
+      @Payload() message: IKafkaMessage<VerificationUserDto>,
+  ){
+    try {
+      this.appLogger.log(
+          `[AuthController][${TOPIC_AUTH_VERIFICATION}] -> [verificationUser]`,
+      );
+    } catch (err) {
+      this.appLogger.error(
+          err,
+          err.stack,
+          `[AuthController][${TOPIC_AUTH_VERIFICATION}] -> [verificationUser]`,
+      );
+      throw new RpcException(JSON.stringify(err));
+    }
+  }
+  @EventPattern(TOPIC_AUTH_VERIFICATION_REPLY)
+  async logVerificationUser(): Promise<void> {
+    this.appLogger.log(
+        `[AuthController][${TOPIC_AUTH_VERIFICATION}][SEND] -> [verificationUser]`,
     );
   }
 }

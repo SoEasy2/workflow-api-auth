@@ -30,7 +30,7 @@ import { JwtService } from './jwt.service';
         transport: Transport.KAFKA,
         options: {
           client: {
-            clientId: 'mailer-service',
+            clientId: 'mail-service',
             brokers: ['kafka:9092'],
           },
           consumer: {
