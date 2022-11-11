@@ -85,8 +85,7 @@ export class AuthService implements OnModuleInit {
     }
   }
 
-  verifyToken(token: string): boolean {
-    console.log('TOKEN', token);
+  verifyToken(token: string): Boolean {
     return this.jwtService.validateToken(token);
   }
 
