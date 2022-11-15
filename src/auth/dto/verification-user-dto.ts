@@ -11,5 +11,5 @@ export class VerificationUserDto implements Partial<User> {
   @IsString()
   @IsNotEmpty()
   @MaxLength(11)
-  code: string;
+  emailCode: string;
 }

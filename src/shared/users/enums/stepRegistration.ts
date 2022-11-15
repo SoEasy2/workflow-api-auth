@@ -1,4 +1,4 @@
-export enum stepRegistration {
+export enum StepRegistration {
   REGISTRATION = 1,
   VERIFICATION = 2,
   DETAILS = 3,

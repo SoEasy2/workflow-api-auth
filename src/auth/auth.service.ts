@@ -6,12 +6,14 @@ import {
   TOPIC_USER_CHECK_PASSWORD,
   TOPIC_USER_CREATE,
   TOPIC_USER_FIND_BY_EMAIL,
+  TOPIC_USER_UPDATE,
 } from '../common/constants';
 import { JwtService } from './jwt.service';
 import { IResponseAuth } from './interfaces/response-auth.interface';
 import { User } from './entities/User';
-import { stepRegistration } from '../shared/users/enums/stepRegistration';
+import { StepRegistration } from '../shared/users/enums/stepRegistration';
 import { LoginUserDto } from './dto/login-user-dto';
+import { VerificationUserDto } from './dto/verification-user-dto';
 
 @Injectable()
 export class AuthService implements OnModuleInit {
@@ -21,7 +23,12 @@ export class AuthService implements OnModuleInit {
     private readonly jwtService: JwtService,
   ) {}
   async onModuleInit() {
-    const topics: Array<string> = [TOPIC_USER_CREATE, TOPIC_MAILER_SEND];
+    const topics: Array<string> = [
+      TOPIC_USER_CREATE,
+      TOPIC_MAILER_SEND,
+      TOPIC_USER_FIND_BY_EMAIL,
+      TOPIC_USER_UPDATE,
+    ];
     topics.forEach((topic) => {
       this.clientUser.subscribeToResponseOf(topic);
     });
@@ -40,8 +47,8 @@ export class AuthService implements OnModuleInit {
       this.clientUser
         .send(TOPIC_USER_CREATE, {
           ...createUserDto,
-          code,
-          stepRegistration: stepRegistration.VERIFICATION,
+          codeEmail: code,
+          stepRegistration: StepRegistration.VERIFICATION,
           sendCodeDate: new Date(),
         })
         .subscribe({
@@ -85,8 +92,44 @@ export class AuthService implements OnModuleInit {
     }
   }
 
-  verifyToken(token: string): Boolean {
+  verifyToken(token: string): boolean {
     return this.jwtService.validateToken(token);
+  }
+
+  async verificationUser(dto: VerificationUserDto): Promise<User> {
+    try {
+      const user = await new Promise<User>((resolve, reject) => {
+        this.clientUser.send(TOPIC_USER_FIND_BY_EMAIL, dto.email).subscribe({
+          next: (response) => resolve(response),
+          error: (error) => reject(error),
+        });
+      });
+
+      if (!user) {
+        throw new RpcException('User not found');
+      }
+      const { codeEmail } = user;
+      if (codeEmail !== dto.emailCode) {
+        throw new RpcException('Code is incorrect');
+      }
+      // const currentDate = new Date();
+      // currentDate.setSeconds(currentDate.getSeconds() + 30);
+      // if (currentDate < sendCodeDate ) {
+      //   throw new RpcException('Code is expired');
+      // }
+      const updateDto = {
+        stepRegistration: StepRegistration.DETAILS,
+        id: user.id,
+      };
+      return await new Promise<User>((resolve, reject) => {
+        this.clientUser.send(TOPIC_USER_UPDATE, updateDto).subscribe({
+          next: (response) => resolve(response),
+          error: (error) => reject(error),
+        });
+      });
+    } catch (err) {
+      throw new RpcException(JSON.stringify(err));
+    }
   }
 
   generateCode(n: number) {
