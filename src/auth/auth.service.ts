@@ -1,4 +1,4 @@
-import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit, UnauthorizedException } from '@nestjs/common';
 import { ClientKafka, RpcException } from '@nestjs/microservices';
 import { CreateUserDto } from './dto/create-user-dto';
 import {
@@ -129,6 +129,26 @@ export class AuthService implements OnModuleInit {
       });
     } catch (err) {
       throw new RpcException(JSON.stringify(err));
+    }
+  }
+
+  async refreshUser(refresh_token: string): Promise<IResponseAuth> {
+    try {
+      const isValidToken = this.jwtService.validateToken(refresh_token);
+      if (!isValidToken) {
+        throw new RpcException(new UnauthorizedException());
+      }
+      const payload = this.jwtService.decodeToken(refresh_token);
+      const user = await new Promise<User>((resolve, reject) => {
+        this.clientUser.send(TOPIC_USER_FIND_BY_EMAIL, payload.email).subscribe({
+          next: (response) => resolve(response),
+          error: (error) => reject(error),
+        });
+      })
+      const tokens = this.jwtService.generateTokens(user);
+      return { user, tokens };
+    } catch (e) {
+      throw new RpcException(JSON.stringify(e));
     }
   }
 

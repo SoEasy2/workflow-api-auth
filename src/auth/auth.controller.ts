@@ -13,7 +13,7 @@ import {
   RpcException,
 } from '@nestjs/microservices';
 import {
-  TOPIC_AUTH_LOGIN,
+  TOPIC_AUTH_LOGIN, TOPIC_AUTH_LOGIN_REPLY, TOPIC_AUTH_REFRESH, TOPIC_AUTH_REFRESH_REPLY,
   TOPIC_AUTH_REGISTER,
   TOPIC_AUTH_REGISTER_REPLY,
   TOPIC_AUTH_VERIFICATION,
@@ -63,6 +63,7 @@ export class AuthController {
     );
   }
 
+
   @MessagePattern(TOPIC_AUTH_LOGIN)
   async loginUser(
     @Payload() message: IKafkaMessage<LoginUserDto>,
@@ -81,6 +82,13 @@ export class AuthController {
       throw new RpcException(JSON.stringify(err));
     }
   }
+  @EventPattern(TOPIC_AUTH_LOGIN_REPLY)
+  async logLoginUser(): Promise<void> {
+    this.appLogger.log(
+        `[AuthController][${TOPIC_AUTH_LOGIN}][SEND] -> [loginUser]`,
+    );
+  }
+
 
   @MessagePattern(TOPIC_AUTH_VERIFY_TOKEN)
   verifyToken(@Payload() message: IKafkaMessage<string>): boolean {
@@ -105,6 +113,7 @@ export class AuthController {
     );
   }
 
+
   @MessagePattern(TOPIC_AUTH_VERIFICATION)
   async verificationUser(
     @Payload() message: IKafkaMessage<VerificationUserDto>,
@@ -128,6 +137,32 @@ export class AuthController {
   async logVerificationUser(): Promise<void> {
     this.appLogger.log(
       `[AuthController][${TOPIC_AUTH_VERIFICATION}][SEND] -> [verificationUser]`,
+    );
+  }
+
+
+  @MessagePattern(TOPIC_AUTH_REFRESH)
+  async refreshUser(
+      @Payload() message: IKafkaMessage<string>,
+  ) {
+    try {
+      this.appLogger.log(
+          `[AuthController][${TOPIC_AUTH_REFRESH}] -> [refreshUser]`,
+      );
+      return await this.authService.refreshUser(message.value);
+    } catch (err) {
+      this.appLogger.error(
+          err,
+          err.stack,
+          `[AuthController][${TOPIC_AUTH_REFRESH}] -> [refreshUser]`,
+      );
+      throw new RpcException(JSON.stringify(err));
+    }
+  }
+  @EventPattern(TOPIC_AUTH_REFRESH_REPLY)
+  async logRefreshUser(): Promise<void> {
+    this.appLogger.log(
+        `[AuthController][${TOPIC_AUTH_REFRESH}][SEND] -> [refreshUser]`,
     );
   }
 }

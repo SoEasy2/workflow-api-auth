@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { IToken } from './interfaces/token.interface';
 import { PayloadTokenDto } from './dto/payload-token.dto';
+import * as jwt from 'jsonwebtoken';
 import { sign, verify } from 'jsonwebtoken';
 import { RpcException } from '@nestjs/microservices';
 
@@ -29,6 +30,14 @@ export class JwtService {
       return !!verify(token, process.env.JWT_SECRET || 'secret');
     } catch (e) {
       throw new RpcException(e);
+    }
+  }
+
+  decodeToken(token: string): PayloadTokenDto {
+    try {
+      return jwt.decode(token) as PayloadTokenDto;
+    } catch (e) {
+        throw new RpcException(e);
     }
   }
 }

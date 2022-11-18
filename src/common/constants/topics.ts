@@ -7,6 +7,9 @@ export const TOPIC_AUTH_VERIFICATION_REPLY = 'auth.verification.reply';
 export const TOPIC_AUTH_VERIFY_TOKEN = 'auth.verifyToken';
 export const TOPIC_AUTH_VERIFY_TOKEN_REPLY = 'auth.verifyToken.reply';
 
+export const TOPIC_AUTH_REFRESH = 'auth.refresh';
+export const TOPIC_AUTH_REFRESH_REPLY = 'auth.refresh.reply';
+
 export const TOPIC_AUTH_LOGIN = 'auth.login';
 export const TOPIC_AUTH_LOGIN_REPLY = 'auth.login.reply';
 
