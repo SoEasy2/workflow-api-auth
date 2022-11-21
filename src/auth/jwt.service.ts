@@ -12,7 +12,7 @@ export class JwtService {
     const accessToken = sign(
       { ...payloadToken },
       process.env.JWT_SECRET || 'secret',
-      { expiresIn: process.env.JWT_ACCESS_EXPIRE || '10m' },
+      { expiresIn: process.env.JWT_ACCESS_EXPIRE || '1m' },
     );
     const refreshToken = sign(
       { ...payloadToken },
