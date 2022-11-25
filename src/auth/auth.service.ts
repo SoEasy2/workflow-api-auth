@@ -37,12 +37,6 @@ export class AuthService implements OnModuleInit {
 
   async registerUser(createUserDto: CreateUserDto): Promise<IResponseAuth> {
     const code = this.generateCode(4);
-    await new Promise<any>((resolve, reject) => {
-      this.clientUser.emit(TOPIC_MAILER_SEND, { code }).subscribe({
-        next: (response) => resolve(response),
-        error: (error) => reject(error),
-      });
-    });
     const user = await new Promise<User>((resolve, reject) => {
       this.clientUser
         .send(TOPIC_USER_CREATE, {
@@ -55,6 +49,12 @@ export class AuthService implements OnModuleInit {
           next: (response) => resolve(response),
           error: (error) => reject(error),
         });
+    });
+    await new Promise<any>((resolve, reject) => {
+      this.clientUser.emit(TOPIC_MAILER_SEND, { code }).subscribe({
+        next: (response) => resolve(response),
+        error: (error) => reject(error),
+      });
     });
 
     const tokens = this.jwtService.generateTokens(user);

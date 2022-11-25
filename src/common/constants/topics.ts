@@ -13,6 +13,10 @@ export const TOPIC_AUTH_REFRESH_REPLY = 'auth.refresh.reply';
 export const TOPIC_AUTH_LOGIN = 'auth.login';
 export const TOPIC_AUTH_LOGIN_REPLY = 'auth.login.reply';
 
+export const TOPIC_AUTH_DETAILS = 'auth.details';
+export const TOPIC_AUTH_DETAILS_REPLY = 'auth.details.reply';
+
+
 export const TOPIC_USER_CREATE = 'user.create';
 export const TOPIC_USER_FIND_BY_ID = 'user.findById';
 export const TOPIC_USER_FIND_BY_EMAIL = 'user.findByEmail';

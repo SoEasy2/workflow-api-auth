@@ -13,6 +13,7 @@ import {
   RpcException,
 } from '@nestjs/microservices';
 import {
+  TOPIC_AUTH_DETAILS, TOPIC_AUTH_DETAILS_REPLY,
   TOPIC_AUTH_LOGIN, TOPIC_AUTH_LOGIN_REPLY, TOPIC_AUTH_REFRESH, TOPIC_AUTH_REFRESH_REPLY,
   TOPIC_AUTH_REGISTER,
   TOPIC_AUTH_REGISTER_REPLY,
@@ -163,6 +164,28 @@ export class AuthController {
   async logRefreshUser(): Promise<void> {
     this.appLogger.log(
         `[AuthController][${TOPIC_AUTH_REFRESH}][SEND] -> [refreshUser]`,
+    );
+  }
+
+  @MessagePattern(TOPIC_AUTH_DETAILS)
+  async details() {
+    try {
+      this.appLogger.log(
+          `[AuthController][${TOPIC_AUTH_DETAILS}] -> [details]`,
+      );
+    } catch (err) {
+      this.appLogger.error(
+          err,
+          err.stack,
+          `[AuthController][${TOPIC_AUTH_DETAILS}] -> [details]`,
+      );
+      throw new RpcException(JSON.stringify(err));
+    }
+  }
+  @EventPattern(TOPIC_AUTH_DETAILS_REPLY)
+  async logDetails(){
+    this.appLogger.log(
+        `[AuthController][${TOPIC_AUTH_DETAILS}][SEND] -> [details]`,
     );
   }
 }
