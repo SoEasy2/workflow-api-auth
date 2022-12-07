@@ -16,6 +16,9 @@ export const TOPIC_AUTH_LOGIN_REPLY = 'auth.login.reply';
 export const TOPIC_AUTH_DETAILS = 'auth.details';
 export const TOPIC_AUTH_DETAILS_REPLY = 'auth.details.reply';
 
+export const TOPIC_AUTH_VERIFICATION_RESEND = 'auth.verification.resend';
+export const TOPIC_AUTH_VERIFICATION_RESEND_REPLY = 'auth.verification.resend.reply';
+
 
 export const TOPIC_USER_CREATE = 'user.create';
 export const TOPIC_USER_FIND_BY_ID = 'user.findById';

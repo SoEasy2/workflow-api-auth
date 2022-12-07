@@ -18,7 +18,7 @@ import {
   TOPIC_AUTH_REGISTER,
   TOPIC_AUTH_REGISTER_REPLY,
   TOPIC_AUTH_VERIFICATION,
-  TOPIC_AUTH_VERIFICATION_REPLY,
+  TOPIC_AUTH_VERIFICATION_REPLY, TOPIC_AUTH_VERIFICATION_RESEND, TOPIC_AUTH_VERIFICATION_RESEND_REPLY,
   TOPIC_AUTH_VERIFY_TOKEN,
   TOPIC_AUTH_VERIFY_TOKEN_REPLY,
 } from '../common/constants';
@@ -141,7 +141,6 @@ export class AuthController {
     );
   }
 
-
   @MessagePattern(TOPIC_AUTH_REFRESH)
   async refreshUser(
       @Payload() message: IKafkaMessage<string>,
@@ -183,9 +182,35 @@ export class AuthController {
     }
   }
   @EventPattern(TOPIC_AUTH_DETAILS_REPLY)
-  async logDetails(){
+  logDetails(){
     this.appLogger.log(
         `[AuthController][${TOPIC_AUTH_DETAILS}][SEND] -> [details]`,
+    );
+  }
+
+  @MessagePattern(TOPIC_AUTH_VERIFICATION_RESEND)
+  async verificationResendCode(
+      @Payload() message: IKafkaMessage<string>,
+  ) {
+    try {
+      this.appLogger.log(
+          `[AuthController][${TOPIC_AUTH_VERIFICATION_RESEND}] -> [verificationResendCode]`,
+      );
+      console.log("MESSAGE VALUE", message.value);
+      return await this.authService.verificationResendCode(message.value);
+    } catch (err) {
+      this.appLogger.error(
+          err,
+          err.stack,
+          `[AuthController][${TOPIC_AUTH_VERIFICATION_RESEND}] -> [verificationResendCode]`,
+      );
+      throw new RpcException(JSON.stringify(err));
+    }
+  }
+  @EventPattern(TOPIC_AUTH_VERIFICATION_RESEND_REPLY)
+  logVerificationResendCode(){
+    this.appLogger.log(
+        `[AuthController][${TOPIC_AUTH_VERIFICATION_RESEND}][SEND] -> [verificationResendCode]`,
     );
   }
 }

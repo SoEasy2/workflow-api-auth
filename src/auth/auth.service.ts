@@ -152,6 +152,38 @@ export class AuthService implements OnModuleInit {
     }
   }
 
+  async verificationResendCode(email: string): Promise<User> {
+   try {
+     const code = this.generateCode(4);
+     const user = await new Promise<User>((resolve, reject) => {
+       this.clientUser.send(TOPIC_USER_FIND_BY_EMAIL, email).subscribe({
+         next: (response) => resolve(response),
+         error: (error) => reject(error),
+       });
+     });
+     if (!user) throw new RpcException('User not found');
+     // await new Promise<any>((resolve, reject) => {
+     //   this.clientUser.emit(TOPIC_MAILER_SEND, { code }).subscribe({
+     //     next: (response) => resolve(response),
+     //     error: (error) => reject(error),
+     //   });
+     // });
+     const updateDto = {
+       codeEmail: code,
+       id: user.id,
+       sendCodeDate: new Date(),
+     };
+     return new Promise<User>((resolve, reject) => {
+       this.clientUser.send(TOPIC_USER_UPDATE, updateDto).subscribe({
+         next: (response) => resolve(response),
+         error: (error) => reject(error),
+       });
+     });
+   } catch (err) {
+     throw new RpcException(JSON.stringify(err))
+   }
+  }
+
   generateCode(n: number) {
     const add = 1;
     let max = 12 - add;
