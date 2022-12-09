@@ -13,12 +13,18 @@ import {
   RpcException,
 } from '@nestjs/microservices';
 import {
-  TOPIC_AUTH_DETAILS, TOPIC_AUTH_DETAILS_REPLY,
-  TOPIC_AUTH_LOGIN, TOPIC_AUTH_LOGIN_REPLY, TOPIC_AUTH_REFRESH, TOPIC_AUTH_REFRESH_REPLY,
+  TOPIC_AUTH_DETAILS,
+  TOPIC_AUTH_DETAILS_REPLY,
+  TOPIC_AUTH_LOGIN,
+  TOPIC_AUTH_LOGIN_REPLY,
+  TOPIC_AUTH_REFRESH,
+  TOPIC_AUTH_REFRESH_REPLY,
   TOPIC_AUTH_REGISTER,
   TOPIC_AUTH_REGISTER_REPLY,
   TOPIC_AUTH_VERIFICATION,
-  TOPIC_AUTH_VERIFICATION_REPLY, TOPIC_AUTH_VERIFICATION_RESEND, TOPIC_AUTH_VERIFICATION_RESEND_REPLY,
+  TOPIC_AUTH_VERIFICATION_REPLY,
+  TOPIC_AUTH_VERIFICATION_RESEND,
+  TOPIC_AUTH_VERIFICATION_RESEND_REPLY,
   TOPIC_AUTH_VERIFY_TOKEN,
   TOPIC_AUTH_VERIFY_TOKEN_REPLY,
 } from '../common/constants';
@@ -28,6 +34,8 @@ import { ExceptionFilter } from '../exceptions/rpc-exception.filter';
 import { IResponseAuth } from './interfaces/response-auth.interface';
 import { VerificationUserDto } from './dto/verification-user-dto';
 import { LoginUserDto } from './dto/login-user-dto';
+import { DetailsUserDto } from './dto/details-user-dto';
+import { User } from './entities/User';
 
 @UseFilters(new ExceptionFilter())
 @UsePipes(new ValidationPipe({ transform: true }))
@@ -167,11 +175,14 @@ export class AuthController {
   }
 
   @MessagePattern(TOPIC_AUTH_DETAILS)
-  async details() {
+  async details(
+      @Payload() message: IKafkaMessage<DetailsUserDto>
+  ): Promise<User> {
     try {
       this.appLogger.log(
           `[AuthController][${TOPIC_AUTH_DETAILS}] -> [details]`,
       );
+      return await this.authService.details(message.value)
     } catch (err) {
       this.appLogger.error(
           err,

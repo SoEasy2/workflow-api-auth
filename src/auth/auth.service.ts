@@ -14,6 +14,8 @@ import { User } from './entities/User';
 import { StepRegistration } from '../shared/users/enums/stepRegistration';
 import { LoginUserDto } from './dto/login-user-dto';
 import { VerificationUserDto } from './dto/verification-user-dto';
+import { DetailsUserDto } from './dto/details-user-dto';
+import { Company } from './entities/Company';
 
 @Injectable()
 export class AuthService implements OnModuleInit {
@@ -182,6 +184,38 @@ export class AuthService implements OnModuleInit {
    } catch (err) {
      throw new RpcException(JSON.stringify(err))
    }
+  }
+
+  async details(dto: DetailsUserDto): Promise<User>{
+    try {
+      const { user: userDto, company: companyDto } = dto;
+      const user = await new Promise<User>((resolve, reject) => {
+        this.clientUser.send(TOPIC_USER_FIND_BY_EMAIL, userDto.email).subscribe({
+          next: (response) => resolve(response),
+          error: (error) => reject(error),
+        });
+      });
+      if (!user) throw new RpcException('User not found');
+      const company = await new Promise<Company>((resolve, reject) => {
+        this.clientUser.send(TOPIC_USER_FIND_BY_EMAIL, {
+          ...companyDto,
+          user: user.id,
+          targetUser: [user.id]
+        }).subscribe({
+          next: (response) => resolve(response),
+          error: (error) => reject(error),
+        });
+      });
+      const updatedUser = new Promise<User>((resolve, reject) => {
+        this.clientUser.send(TOPIC_USER_UPDATE, { id: userDto.id, password: userDto.password }).subscribe({
+          next: (response) => resolve(response),
+          error: (error) => reject(error),
+        });
+      });
+      return { ...updatedUser, currentCompany: company }
+    } catch (err) {
+      throw new RpcException(JSON.stringify(err));
+    }
   }
 
   generateCode(n: number) {
