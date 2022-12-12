@@ -27,3 +27,5 @@ export const TOPIC_USER_CHECK_PASSWORD = 'user.checkPassword';
 export const TOPIC_USER_UPDATE = 'user.update';
 
 export const TOPIC_MAILER_SEND = 'mail.send';
+
+export const TOPIC_COMPANY_CREATE = 'company.create';

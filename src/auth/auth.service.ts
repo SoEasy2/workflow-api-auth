@@ -2,6 +2,7 @@ import { Inject, Injectable, OnModuleInit, UnauthorizedException } from '@nestjs
 import { ClientKafka, RpcException } from '@nestjs/microservices';
 import { CreateUserDto } from './dto/create-user-dto';
 import {
+  TOPIC_COMPANY_CREATE,
   TOPIC_MAILER_SEND,
   TOPIC_USER_CHECK_PASSWORD,
   TOPIC_USER_CREATE,
@@ -21,6 +22,7 @@ import { Company } from './entities/Company';
 export class AuthService implements OnModuleInit {
   constructor(
     @Inject('USERS_SERVICE') private readonly clientUser: ClientKafka,
+    @Inject('COMPANY_SERVICE') private readonly clientCompany: ClientKafka,
     @Inject('MAILER_SERVICE') private readonly clientMailer: ClientKafka,
     private readonly jwtService: JwtService,
   ) {}
@@ -30,6 +32,7 @@ export class AuthService implements OnModuleInit {
       TOPIC_MAILER_SEND,
       TOPIC_USER_FIND_BY_EMAIL,
       TOPIC_USER_UPDATE,
+      TOPIC_COMPANY_CREATE,
     ];
     topics.forEach((topic) => {
       this.clientUser.subscribeToResponseOf(topic);
@@ -196,25 +199,31 @@ export class AuthService implements OnModuleInit {
         });
       });
       if (!user) throw new RpcException('User not found');
-      const company = await new Promise<Company>((resolve, reject) => {
-        this.clientUser.send(TOPIC_USER_FIND_BY_EMAIL, {
-          ...companyDto,
-          user: user.id,
-          targetUser: [user.id]
-        }).subscribe({
-          next: (response) => resolve(response),
-          error: (error) => reject(error),
+
+      try {
+        const company = await new Promise<Company>((resolve, reject) => {
+          this.clientUser.send(TOPIC_COMPANY_CREATE, {
+            ...companyDto,
+                        user: user.id,
+                         targetUser: [user.id]
+          }).subscribe({
+            next: (response) => resolve(response),
+            error: (error) => reject(error),
+          });
         });
-      });
-      const updatedUser = new Promise<User>((resolve, reject) => {
-        this.clientUser.send(TOPIC_USER_UPDATE, { id: userDto.id, password: userDto.password }).subscribe({
-          next: (response) => resolve(response),
-          error: (error) => reject(error),
+        const updatedUser = new Promise<User>((resolve, reject) => {
+          this.clientUser.send(TOPIC_USER_UPDATE, { id: userDto.id, password: userDto.password }).subscribe({
+            next: (response) => resolve(response),
+            error: (error) => reject(error),
+          });
         });
-      });
-      return { ...updatedUser, currentCompany: company }
+        return { ...updatedUser, currentCompany: company }
+      } catch (e) {
+        console.log("EXCEPTION", e)
+      }
+
     } catch (err) {
-      throw new RpcException(JSON.stringify(err));
+      throw new RpcException(JSON.stringify(err.message));
     }
   }
 

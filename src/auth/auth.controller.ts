@@ -131,7 +131,6 @@ export class AuthController {
       this.appLogger.log(
         `[AuthController][${TOPIC_AUTH_VERIFICATION}] -> [verificationUser]`,
       );
-      console.log('MESSAGE', message.value);
       return await this.authService.verificationUser(message.value);
     } catch (err) {
       this.appLogger.error(
@@ -207,7 +206,6 @@ export class AuthController {
       this.appLogger.log(
           `[AuthController][${TOPIC_AUTH_VERIFICATION_RESEND}] -> [verificationResendCode]`,
       );
-      console.log("MESSAGE VALUE", message.value);
       return await this.authService.verificationResendCode(message.value);
     } catch (err) {
       this.appLogger.error(

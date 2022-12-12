@@ -26,6 +26,22 @@ import { JwtService } from './jwt.service';
     ]),
     ClientsModule.register([
       {
+        name: 'COMPANY_SERVICE',
+        transport: Transport.KAFKA,
+        options: {
+          client: {
+            clientId: 'company-service',
+            brokers: ['kafka:9092'],
+          },
+          consumer: {
+            groupId: `company-consumer-${uuidv4()}`,
+            rebalanceTimeout: 10000,
+          },
+        },
+      },
+    ]),
+    ClientsModule.register([
+      {
         name: 'MAILER_SERVICE',
         transport: Transport.KAFKA,
         options: {
