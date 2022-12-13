@@ -29,3 +29,4 @@ export const TOPIC_USER_UPDATE = 'user.update';
 export const TOPIC_MAILER_SEND = 'mail.send';
 
 export const TOPIC_COMPANY_CREATE = 'company.create';
+export const TOPIC_COMPANY_GET_BY_ID = 'company.get.by.id';

@@ -8,7 +8,7 @@ export class User {
   createdAt: string;
   updatedAt: string;
   codeEmail: string;
-  name?: string;
+  username?: string;
   currentCompany?: string | Company
   sendCodeDate: Date;
   stepRegistration: StepRegistration;

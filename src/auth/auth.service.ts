@@ -3,6 +3,7 @@ import { ClientKafka, RpcException } from '@nestjs/microservices';
 import { CreateUserDto } from './dto/create-user-dto';
 import {
   TOPIC_COMPANY_CREATE,
+  TOPIC_COMPANY_GET_BY_ID,
   TOPIC_MAILER_SEND,
   TOPIC_USER_CHECK_PASSWORD,
   TOPIC_USER_CREATE,
@@ -27,17 +28,25 @@ export class AuthService implements OnModuleInit {
     private readonly jwtService: JwtService,
   ) {}
   async onModuleInit() {
-    const topics: Array<string> = [
+    const topicsUser: Array<string> = [
       TOPIC_USER_CREATE,
-      TOPIC_MAILER_SEND,
       TOPIC_USER_FIND_BY_EMAIL,
       TOPIC_USER_UPDATE,
-      TOPIC_COMPANY_CREATE,
     ];
-    topics.forEach((topic) => {
+    const topicsCompany: Array<string> = [
+      TOPIC_COMPANY_CREATE,
+      TOPIC_COMPANY_GET_BY_ID,
+    ]
+    topicsUser.forEach((topic) => {
       this.clientUser.subscribeToResponseOf(topic);
     });
-    await this.clientUser.connect();
+    topicsCompany.forEach((topic) => {
+      this.clientCompany.subscribeToResponseOf(topic);
+    })
+    await Promise.all([
+      this.clientUser.connect(),
+      this.clientCompany.connect()
+    ])
   }
 
   async registerUser(createUserDto: CreateUserDto): Promise<IResponseAuth> {
@@ -67,7 +76,6 @@ export class AuthService implements OnModuleInit {
   }
 
   async loginUser(dto: LoginUserDto): Promise<IResponseAuth> {
-    try {
       const { email } = dto;
       const user = await new Promise<User>((resolve, reject) => {
         this.clientUser.send(TOPIC_USER_FIND_BY_EMAIL, email).subscribe({
@@ -92,9 +100,6 @@ export class AuthService implements OnModuleInit {
 
       const tokens = this.jwtService.generateTokens(user);
       return { user, tokens };
-    } catch (e) {
-      throw new RpcException(JSON.stringify(e));
-    }
   }
 
   verifyToken(token: string): boolean {
@@ -102,7 +107,6 @@ export class AuthService implements OnModuleInit {
   }
 
   async verificationUser(dto: VerificationUserDto): Promise<User> {
-    try {
       const user = await new Promise<User>((resolve, reject) => {
         this.clientUser.send(TOPIC_USER_FIND_BY_EMAIL, dto.email).subscribe({
           next: (response) => resolve(response),
@@ -132,13 +136,9 @@ export class AuthService implements OnModuleInit {
           error: (error) => reject(error),
         });
       });
-    } catch (err) {
-      throw new RpcException(JSON.stringify(err));
-    }
   }
 
   async refreshUser(refresh_token: string): Promise<IResponseAuth> {
-    try {
       const isValidToken = this.jwtService.validateToken(refresh_token);
       if (!isValidToken) {
         throw new RpcException(new UnauthorizedException());
@@ -149,16 +149,23 @@ export class AuthService implements OnModuleInit {
           next: (response) => resolve(response),
           error: (error) => reject(error),
         });
-      })
+      });
+      if (user.currentCompany) {
+        const tokens = this.jwtService.generateTokens(user);
+        user.currentCompany = await new Promise<Company>((resolve, reject) => {
+          this.clientCompany.send(TOPIC_COMPANY_GET_BY_ID, user.currentCompany).subscribe({
+            next: (response) => resolve(response),
+            error: (error) => reject(error),
+          });
+        });
+        return { user, tokens };
+      }
+      user.currentCompany = null;
       const tokens = this.jwtService.generateTokens(user);
       return { user, tokens };
-    } catch (e) {
-      throw new RpcException(JSON.stringify(e));
-    }
   }
 
   async verificationResendCode(email: string): Promise<User> {
-   try {
      const code = this.generateCode(4);
      const user = await new Promise<User>((resolve, reject) => {
        this.clientUser.send(TOPIC_USER_FIND_BY_EMAIL, email).subscribe({
@@ -184,14 +191,10 @@ export class AuthService implements OnModuleInit {
          error: (error) => reject(error),
        });
      });
-   } catch (err) {
-     throw new RpcException(JSON.stringify(err))
-   }
   }
 
   async details(dto: DetailsUserDto): Promise<User>{
-    try {
-      const { user: userDto, company: companyDto } = dto;
+      const {user: userDto, company: companyDto} = dto;
       const user = await new Promise<User>((resolve, reject) => {
         this.clientUser.send(TOPIC_USER_FIND_BY_EMAIL, userDto.email).subscribe({
           next: (response) => resolve(response),
@@ -199,32 +202,28 @@ export class AuthService implements OnModuleInit {
         });
       });
       if (!user) throw new RpcException('User not found');
-
-      try {
-        const company = await new Promise<Company>((resolve, reject) => {
-          this.clientUser.send(TOPIC_COMPANY_CREATE, {
-            ...companyDto,
-                        user: user.id,
-                         targetUser: [user.id]
-          }).subscribe({
-            next: (response) => resolve(response),
-            error: (error) => reject(error),
-          });
+      const company = await new Promise<Company>((resolve, reject) => {
+        this.clientCompany.send(TOPIC_COMPANY_CREATE, {
+          ...companyDto,
+          user: user.id,
+          targetUser: [user.id]
+        }).subscribe({
+          next: (response) => resolve(response),
+          error: (error) => reject(error),
         });
-        const updatedUser = new Promise<User>((resolve, reject) => {
-          this.clientUser.send(TOPIC_USER_UPDATE, { id: userDto.id, password: userDto.password }).subscribe({
-            next: (response) => resolve(response),
-            error: (error) => reject(error),
-          });
+      });
+      const updatedUser = await new Promise<User>((resolve, reject) => {
+        this.clientUser.send(TOPIC_USER_UPDATE, {
+          ...userDto,
+          stepRegistration: StepRegistration.COMPLETE,
+          currentCompany: company.id
+        }).subscribe({
+          next: (response) => resolve(response),
+          error: (error) => reject(error),
         });
-        return { ...updatedUser, currentCompany: company }
-      } catch (e) {
-        console.log("EXCEPTION", e)
-      }
-
-    } catch (err) {
-      throw new RpcException(JSON.stringify(err.message));
-    }
+      });
+      console.log('updateted user', updatedUser)
+      return {...updatedUser, currentCompany: company}
   }
 
   generateCode(n: number) {
