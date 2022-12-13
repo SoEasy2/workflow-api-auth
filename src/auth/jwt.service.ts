@@ -37,7 +37,7 @@ export class JwtService {
     try {
       return jwt.decode(token) as PayloadTokenDto;
     } catch (e) {
-        throw new RpcException(e);
+      throw new RpcException(e);
     }
   }
 }

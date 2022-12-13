@@ -9,7 +9,7 @@ export class User {
   updatedAt: string;
   codeEmail: string;
   username?: string;
-  currentCompany?: string | Company
+  currentCompany?: string | Company;
   sendCodeDate: Date;
   stepRegistration: StepRegistration;
   password?: string;

@@ -72,7 +72,6 @@ export class AuthController {
     );
   }
 
-
   @MessagePattern(TOPIC_AUTH_LOGIN)
   async loginUser(
     @Payload() message: IKafkaMessage<LoginUserDto>,
@@ -94,10 +93,9 @@ export class AuthController {
   @EventPattern(TOPIC_AUTH_LOGIN_REPLY)
   async logLoginUser(): Promise<void> {
     this.appLogger.log(
-        `[AuthController][${TOPIC_AUTH_LOGIN}][SEND] -> [loginUser]`,
+      `[AuthController][${TOPIC_AUTH_LOGIN}][SEND] -> [loginUser]`,
     );
   }
-
 
   @MessagePattern(TOPIC_AUTH_VERIFY_TOKEN)
   verifyToken(@Payload() message: IKafkaMessage<string>): boolean {
@@ -121,7 +119,6 @@ export class AuthController {
       `[AuthController][${TOPIC_AUTH_VERIFY_TOKEN}][SEND] -> [registerUser]`,
     );
   }
-
 
   @MessagePattern(TOPIC_AUTH_VERIFICATION)
   async verificationUser(
@@ -149,19 +146,17 @@ export class AuthController {
   }
 
   @MessagePattern(TOPIC_AUTH_REFRESH)
-  async refreshUser(
-      @Payload() message: IKafkaMessage<string>,
-  ) {
+  async refreshUser(@Payload() message: IKafkaMessage<string>) {
     try {
       this.appLogger.log(
-          `[AuthController][${TOPIC_AUTH_REFRESH}] -> [refreshUser]`,
+        `[AuthController][${TOPIC_AUTH_REFRESH}] -> [refreshUser]`,
       );
       return await this.authService.refreshUser(message.value);
     } catch (err) {
       this.appLogger.error(
-          err,
-          err.stack,
-          `[AuthController][${TOPIC_AUTH_REFRESH}] -> [refreshUser]`,
+        err,
+        err.stack,
+        `[AuthController][${TOPIC_AUTH_REFRESH}] -> [refreshUser]`,
       );
       throw new RpcException(JSON.stringify(err));
     }
@@ -169,57 +164,55 @@ export class AuthController {
   @EventPattern(TOPIC_AUTH_REFRESH_REPLY)
   async logRefreshUser(): Promise<void> {
     this.appLogger.log(
-        `[AuthController][${TOPIC_AUTH_REFRESH}][SEND] -> [refreshUser]`,
+      `[AuthController][${TOPIC_AUTH_REFRESH}][SEND] -> [refreshUser]`,
     );
   }
 
   @MessagePattern(TOPIC_AUTH_DETAILS)
   async details(
-      @Payload() message: IKafkaMessage<DetailsUserDto>
+    @Payload() message: IKafkaMessage<DetailsUserDto>,
   ): Promise<User> {
     try {
       this.appLogger.log(
-          `[AuthController][${TOPIC_AUTH_DETAILS}] -> [details]`,
+        `[AuthController][${TOPIC_AUTH_DETAILS}] -> [details]`,
       );
-      return await this.authService.details(message.value)
+      return await this.authService.details(message.value);
     } catch (err) {
       this.appLogger.error(
-          err,
-          err.stack,
-          `[AuthController][${TOPIC_AUTH_DETAILS}] -> [details]`,
+        err,
+        err.stack,
+        `[AuthController][${TOPIC_AUTH_DETAILS}] -> [details]`,
       );
       throw new RpcException(JSON.stringify(err));
     }
   }
   @EventPattern(TOPIC_AUTH_DETAILS_REPLY)
-  logDetails(){
+  logDetails() {
     this.appLogger.log(
-        `[AuthController][${TOPIC_AUTH_DETAILS}][SEND] -> [details]`,
+      `[AuthController][${TOPIC_AUTH_DETAILS}][SEND] -> [details]`,
     );
   }
 
   @MessagePattern(TOPIC_AUTH_VERIFICATION_RESEND)
-  async verificationResendCode(
-      @Payload() message: IKafkaMessage<string>,
-  ) {
+  async verificationResendCode(@Payload() message: IKafkaMessage<string>) {
     try {
       this.appLogger.log(
-          `[AuthController][${TOPIC_AUTH_VERIFICATION_RESEND}] -> [verificationResendCode]`,
+        `[AuthController][${TOPIC_AUTH_VERIFICATION_RESEND}] -> [verificationResendCode]`,
       );
       return await this.authService.verificationResendCode(message.value);
     } catch (err) {
       this.appLogger.error(
-          err,
-          err.stack,
-          `[AuthController][${TOPIC_AUTH_VERIFICATION_RESEND}] -> [verificationResendCode]`,
+        err,
+        err.stack,
+        `[AuthController][${TOPIC_AUTH_VERIFICATION_RESEND}] -> [verificationResendCode]`,
       );
       throw new RpcException(JSON.stringify(err));
     }
   }
   @EventPattern(TOPIC_AUTH_VERIFICATION_RESEND_REPLY)
-  logVerificationResendCode(){
+  logVerificationResendCode() {
     this.appLogger.log(
-        `[AuthController][${TOPIC_AUTH_VERIFICATION_RESEND}][SEND] -> [verificationResendCode]`,
+      `[AuthController][${TOPIC_AUTH_VERIFICATION_RESEND}][SEND] -> [verificationResendCode]`,
     );
   }
 }

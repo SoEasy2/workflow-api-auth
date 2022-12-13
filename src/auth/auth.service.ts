@@ -1,4 +1,9 @@
-import { Inject, Injectable, OnModuleInit, UnauthorizedException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  OnModuleInit,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ClientKafka, RpcException } from '@nestjs/microservices';
 import { CreateUserDto } from './dto/create-user-dto';
 import {
@@ -36,17 +41,17 @@ export class AuthService implements OnModuleInit {
     const topicsCompany: Array<string> = [
       TOPIC_COMPANY_CREATE,
       TOPIC_COMPANY_GET_BY_ID,
-    ]
+    ];
     topicsUser.forEach((topic) => {
       this.clientUser.subscribeToResponseOf(topic);
     });
     topicsCompany.forEach((topic) => {
       this.clientCompany.subscribeToResponseOf(topic);
-    })
+    });
     await Promise.all([
       this.clientUser.connect(),
-      this.clientCompany.connect()
-    ])
+      this.clientCompany.connect(),
+    ]);
   }
 
   async registerUser(createUserDto: CreateUserDto): Promise<IResponseAuth> {
@@ -76,30 +81,28 @@ export class AuthService implements OnModuleInit {
   }
 
   async loginUser(dto: LoginUserDto): Promise<IResponseAuth> {
-      const { email } = dto;
-      const user = await new Promise<User>((resolve, reject) => {
-        this.clientUser.send(TOPIC_USER_FIND_BY_EMAIL, email).subscribe({
-          next: (response) => resolve(response),
-          error: (error) => reject(error),
-        });
+    const { email } = dto;
+    const user = await new Promise<User>((resolve, reject) => {
+      this.clientUser.send(TOPIC_USER_FIND_BY_EMAIL, email).subscribe({
+        next: (response) => resolve(response),
+        error: (error) => reject(error),
       });
-      if (!user) {
-        throw new RpcException('User not found');
-      }
-      const isPasswordCorrect = await new Promise<boolean>(
-        (resolve, reject) => {
-          this.clientUser.send(TOPIC_USER_CHECK_PASSWORD, dto).subscribe({
-            next: (response) => resolve(response),
-            error: (error) => reject(error),
-          });
-        },
-      );
-      if (!isPasswordCorrect) {
-        throw new RpcException('Password is incorrect');
-      }
+    });
+    if (!user) {
+      throw new RpcException('User not found');
+    }
+    const isPasswordCorrect = await new Promise<boolean>((resolve, reject) => {
+      this.clientUser.send(TOPIC_USER_CHECK_PASSWORD, dto).subscribe({
+        next: (response) => resolve(response),
+        error: (error) => reject(error),
+      });
+    });
+    if (!isPasswordCorrect) {
+      throw new RpcException('Password is incorrect');
+    }
 
-      const tokens = this.jwtService.generateTokens(user);
-      return { user, tokens };
+    const tokens = this.jwtService.generateTokens(user);
+    return { user, tokens };
   }
 
   verifyToken(token: string): boolean {
@@ -107,123 +110,129 @@ export class AuthService implements OnModuleInit {
   }
 
   async verificationUser(dto: VerificationUserDto): Promise<User> {
-      const user = await new Promise<User>((resolve, reject) => {
-        this.clientUser.send(TOPIC_USER_FIND_BY_EMAIL, dto.email).subscribe({
-          next: (response) => resolve(response),
-          error: (error) => reject(error),
-        });
+    const user = await new Promise<User>((resolve, reject) => {
+      this.clientUser.send(TOPIC_USER_FIND_BY_EMAIL, dto.email).subscribe({
+        next: (response) => resolve(response),
+        error: (error) => reject(error),
       });
+    });
 
-      if (!user) {
-        throw new RpcException('User not found');
-      }
-      const { codeEmail } = user;
-      if (codeEmail !== dto.emailCode) {
-        throw new RpcException('Code is incorrect');
-      }
-      // const currentDate = new Date();
-      // currentDate.setSeconds(currentDate.getSeconds() + 30);
-      // if (currentDate < sendCodeDate ) {
-      //   throw new RpcException('Code is expired');
-      // }
-      const updateDto = {
-        stepRegistration: StepRegistration.DETAILS,
-        id: user.id,
-      };
-      return await new Promise<User>((resolve, reject) => {
-        this.clientUser.send(TOPIC_USER_UPDATE, updateDto).subscribe({
-          next: (response) => resolve(response),
-          error: (error) => reject(error),
-        });
+    if (!user) {
+      throw new RpcException('User not found');
+    }
+    const { codeEmail } = user;
+    if (codeEmail !== dto.emailCode) {
+      throw new RpcException('Code is incorrect');
+    }
+    // const currentDate = new Date();
+    // currentDate.setSeconds(currentDate.getSeconds() + 30);
+    // if (currentDate < sendCodeDate ) {
+    //   throw new RpcException('Code is expired');
+    // }
+    const updateDto = {
+      stepRegistration: StepRegistration.DETAILS,
+      id: user.id,
+    };
+    return await new Promise<User>((resolve, reject) => {
+      this.clientUser.send(TOPIC_USER_UPDATE, updateDto).subscribe({
+        next: (response) => resolve(response),
+        error: (error) => reject(error),
       });
+    });
   }
 
   async refreshUser(refresh_token: string): Promise<IResponseAuth> {
-      const isValidToken = this.jwtService.validateToken(refresh_token);
-      if (!isValidToken) {
-        throw new RpcException(new UnauthorizedException());
-      }
-      const payload = this.jwtService.decodeToken(refresh_token);
-      const user = await new Promise<User>((resolve, reject) => {
-        this.clientUser.send(TOPIC_USER_FIND_BY_EMAIL, payload.email).subscribe({
-          next: (response) => resolve(response),
-          error: (error) => reject(error),
-        });
+    const isValidToken = this.jwtService.validateToken(refresh_token);
+    if (!isValidToken) {
+      throw new RpcException(new UnauthorizedException());
+    }
+    const payload = this.jwtService.decodeToken(refresh_token);
+    const user = await new Promise<User>((resolve, reject) => {
+      this.clientUser.send(TOPIC_USER_FIND_BY_EMAIL, payload.email).subscribe({
+        next: (response) => resolve(response),
+        error: (error) => reject(error),
       });
-      if (user.currentCompany) {
-        const tokens = this.jwtService.generateTokens(user);
-        user.currentCompany = await new Promise<Company>((resolve, reject) => {
-          this.clientCompany.send(TOPIC_COMPANY_GET_BY_ID, user.currentCompany).subscribe({
+    });
+    if (user.currentCompany) {
+      const tokens = this.jwtService.generateTokens(user);
+      user.currentCompany = await new Promise<Company>((resolve, reject) => {
+        this.clientCompany
+          .send(TOPIC_COMPANY_GET_BY_ID, user.currentCompany)
+          .subscribe({
             next: (response) => resolve(response),
             error: (error) => reject(error),
           });
-        });
-        return { user, tokens };
-      }
-      user.currentCompany = null;
-      const tokens = this.jwtService.generateTokens(user);
+      });
       return { user, tokens };
+    }
+    user.currentCompany = null;
+    const tokens = this.jwtService.generateTokens(user);
+    return { user, tokens };
   }
 
   async verificationResendCode(email: string): Promise<User> {
-     const code = this.generateCode(4);
-     const user = await new Promise<User>((resolve, reject) => {
-       this.clientUser.send(TOPIC_USER_FIND_BY_EMAIL, email).subscribe({
-         next: (response) => resolve(response),
-         error: (error) => reject(error),
-       });
-     });
-     if (!user) throw new RpcException('User not found');
-     // await new Promise<any>((resolve, reject) => {
-     //   this.clientUser.emit(TOPIC_MAILER_SEND, { code }).subscribe({
-     //     next: (response) => resolve(response),
-     //     error: (error) => reject(error),
-     //   });
-     // });
-     const updateDto = {
-       codeEmail: code,
-       id: user.id,
-       sendCodeDate: new Date(),
-     };
-     return new Promise<User>((resolve, reject) => {
-       this.clientUser.send(TOPIC_USER_UPDATE, updateDto).subscribe({
-         next: (response) => resolve(response),
-         error: (error) => reject(error),
-       });
-     });
+    const code = this.generateCode(4);
+    const user = await new Promise<User>((resolve, reject) => {
+      this.clientUser.send(TOPIC_USER_FIND_BY_EMAIL, email).subscribe({
+        next: (response) => resolve(response),
+        error: (error) => reject(error),
+      });
+    });
+    if (!user) throw new RpcException('User not found');
+    // await new Promise<any>((resolve, reject) => {
+    //   this.clientUser.emit(TOPIC_MAILER_SEND, { code }).subscribe({
+    //     next: (response) => resolve(response),
+    //     error: (error) => reject(error),
+    //   });
+    // });
+    const updateDto = {
+      codeEmail: code,
+      id: user.id,
+      sendCodeDate: new Date(),
+    };
+    return new Promise<User>((resolve, reject) => {
+      this.clientUser.send(TOPIC_USER_UPDATE, updateDto).subscribe({
+        next: (response) => resolve(response),
+        error: (error) => reject(error),
+      });
+    });
   }
 
-  async details(dto: DetailsUserDto): Promise<User>{
-      const {user: userDto, company: companyDto} = dto;
-      const user = await new Promise<User>((resolve, reject) => {
-        this.clientUser.send(TOPIC_USER_FIND_BY_EMAIL, userDto.email).subscribe({
-          next: (response) => resolve(response),
-          error: (error) => reject(error),
-        });
+  async details(dto: DetailsUserDto): Promise<User> {
+    const { user: userDto, company: companyDto } = dto;
+    const user = await new Promise<User>((resolve, reject) => {
+      this.clientUser.send(TOPIC_USER_FIND_BY_EMAIL, userDto.email).subscribe({
+        next: (response) => resolve(response),
+        error: (error) => reject(error),
       });
-      if (!user) throw new RpcException('User not found');
-      const company = await new Promise<Company>((resolve, reject) => {
-        this.clientCompany.send(TOPIC_COMPANY_CREATE, {
+    });
+    if (!user) throw new RpcException('User not found');
+    const company = await new Promise<Company>((resolve, reject) => {
+      this.clientCompany
+        .send(TOPIC_COMPANY_CREATE, {
           ...companyDto,
           user: user.id,
-          targetUser: [user.id]
-        }).subscribe({
+          targetUser: [user.id],
+        })
+        .subscribe({
           next: (response) => resolve(response),
           error: (error) => reject(error),
         });
-      });
-      const updatedUser = await new Promise<User>((resolve, reject) => {
-        this.clientUser.send(TOPIC_USER_UPDATE, {
+    });
+    const updatedUser = await new Promise<User>((resolve, reject) => {
+      this.clientUser
+        .send(TOPIC_USER_UPDATE, {
           ...userDto,
           stepRegistration: StepRegistration.COMPLETE,
-          currentCompany: company.id
-        }).subscribe({
+          currentCompany: company.id,
+        })
+        .subscribe({
           next: (response) => resolve(response),
           error: (error) => reject(error),
         });
-      });
-      console.log('updateted user', updatedUser)
-      return {...updatedUser, currentCompany: company}
+    });
+    console.log('updateted user', updatedUser);
+    return { ...updatedUser, currentCompany: company };
   }
 
   generateCode(n: number) {
