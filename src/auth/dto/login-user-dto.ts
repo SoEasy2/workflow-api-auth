@@ -8,11 +8,10 @@ import {
 } from 'class-validator';
 
 export class LoginUserDto implements Partial<User> {
-  @IsEmail()
   @IsNotEmpty()
   @IsString()
   @MaxLength(255)
-  email: string;
+  login: string;
 
   @IsNotEmpty()
   @IsString()

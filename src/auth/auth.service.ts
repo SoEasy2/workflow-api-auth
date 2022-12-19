@@ -4,15 +4,15 @@ import {
   OnModuleInit,
   UnauthorizedException,
 } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { ClientKafka, RpcException } from '@nestjs/microservices';
 import { CreateUserDto } from './dto/create-user-dto';
 import {
   TOPIC_COMPANY_CREATE,
   TOPIC_COMPANY_GET_BY_ID,
   TOPIC_MAILER_SEND,
-  TOPIC_USER_CHECK_PASSWORD,
   TOPIC_USER_CREATE,
-  TOPIC_USER_FIND_BY_EMAIL,
+  TOPIC_USER_FIND_BY_EMAIL, TOPIC_USER_FIND_BY_EMAIL_OR_PHONE,
   TOPIC_USER_UPDATE,
 } from '../common/constants';
 import { JwtService } from './jwt.service';
@@ -23,6 +23,7 @@ import { LoginUserDto } from './dto/login-user-dto';
 import { VerificationUserDto } from './dto/verification-user-dto';
 import { DetailsUserDto } from './dto/details-user-dto';
 import { Company } from './entities/Company';
+import { ICryptPassword } from './interfaces/crypt-password.interface';
 
 @Injectable()
 export class AuthService implements OnModuleInit {
@@ -37,6 +38,7 @@ export class AuthService implements OnModuleInit {
       TOPIC_USER_CREATE,
       TOPIC_USER_FIND_BY_EMAIL,
       TOPIC_USER_UPDATE,
+      TOPIC_USER_FIND_BY_EMAIL_OR_PHONE,
     ];
     const topicsCompany: Array<string> = [
       TOPIC_COMPANY_CREATE,
@@ -81,9 +83,9 @@ export class AuthService implements OnModuleInit {
   }
 
   async loginUser(dto: LoginUserDto): Promise<IResponseAuth> {
-    const { email } = dto;
+    const { login } = dto;
     const user = await new Promise<User>((resolve, reject) => {
-      this.clientUser.send(TOPIC_USER_FIND_BY_EMAIL, email).subscribe({
+      this.clientUser.send(TOPIC_USER_FIND_BY_EMAIL_OR_PHONE, login).subscribe({
         next: (response) => resolve(response),
         error: (error) => reject(error),
       });
@@ -91,16 +93,24 @@ export class AuthService implements OnModuleInit {
     if (!user) {
       throw new RpcException('User not found');
     }
-    const isPasswordCorrect = await new Promise<boolean>((resolve, reject) => {
-      this.clientUser.send(TOPIC_USER_CHECK_PASSWORD, dto).subscribe({
-        next: (response) => resolve(response),
-        error: (error) => reject(error),
-      });
-    });
+    const { password: hashPassword, salt } = user;
+    const isPasswordCorrect = await this.comparePassword(dto.password, salt, hashPassword);
     if (!isPasswordCorrect) {
       throw new RpcException('Password is incorrect');
     }
-
+    if (user.currentCompany) {
+      const tokens = this.jwtService.generateTokens(user);
+      user.currentCompany = await new Promise<Company>((resolve, reject) => {
+        this.clientCompany
+            .send(TOPIC_COMPANY_GET_BY_ID, user.currentCompany)
+            .subscribe({
+              next: (response) => resolve(response),
+              error: (error) => reject(error),
+            });
+      });
+      return { user, tokens };
+    }
+    user.currentCompany = null;
     const tokens = this.jwtService.generateTokens(user);
     return { user, tokens };
   }
@@ -219,10 +229,12 @@ export class AuthService implements OnModuleInit {
           error: (error) => reject(error),
         });
     });
+    const cryptPassword = await this.cryptPassword(userDto.password);
     const updatedUser = await new Promise<User>((resolve, reject) => {
       this.clientUser
         .send(TOPIC_USER_UPDATE, {
           ...userDto,
+          ...cryptPassword,
           stepRegistration: StepRegistration.COMPLETE,
           currentCompany: company.id,
         })
@@ -231,7 +243,6 @@ export class AuthService implements OnModuleInit {
           error: (error) => reject(error),
         });
     });
-    console.log('updateted user', updatedUser);
     return { ...updatedUser, currentCompany: company };
   }
 
@@ -246,5 +257,20 @@ export class AuthService implements OnModuleInit {
     const number = Math.floor(Math.random() * (max - min + 1)) + min;
 
     return ('' + number).substring(add);
+  }
+
+  async cryptPassword(password: string): Promise<ICryptPassword> {
+      const saltOrRounds = 10;
+      const salt = await bcrypt.genSalt(saltOrRounds);
+      const hash = await bcrypt.hash(password, salt);
+      return {
+        password: hash,
+        salt
+      }
+  };
+
+  async comparePassword(password: string, salt: string, hashPassword): Promise<boolean> {
+    const hash = await bcrypt.hash(password.trim(), salt.trim());
+    return hash === hashPassword;
   }
 }
