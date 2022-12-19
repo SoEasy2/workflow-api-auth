@@ -12,7 +12,8 @@ import {
   TOPIC_COMPANY_GET_BY_ID,
   TOPIC_MAILER_SEND,
   TOPIC_USER_CREATE,
-  TOPIC_USER_FIND_BY_EMAIL, TOPIC_USER_FIND_BY_EMAIL_OR_PHONE,
+  TOPIC_USER_FIND_BY_EMAIL,
+  TOPIC_USER_FIND_BY_EMAIL_OR_PHONE,
   TOPIC_USER_UPDATE,
 } from '../common/constants';
 import { JwtService } from './jwt.service';
@@ -94,7 +95,11 @@ export class AuthService implements OnModuleInit {
       throw new RpcException('User not found');
     }
     const { password: hashPassword, salt } = user;
-    const isPasswordCorrect = await this.comparePassword(dto.password, salt, hashPassword);
+    const isPasswordCorrect = await this.comparePassword(
+      dto.password,
+      salt,
+      hashPassword,
+    );
     if (!isPasswordCorrect) {
       throw new RpcException('Password is incorrect');
     }
@@ -102,11 +107,11 @@ export class AuthService implements OnModuleInit {
       const tokens = this.jwtService.generateTokens(user);
       user.currentCompany = await new Promise<Company>((resolve, reject) => {
         this.clientCompany
-            .send(TOPIC_COMPANY_GET_BY_ID, user.currentCompany)
-            .subscribe({
-              next: (response) => resolve(response),
-              error: (error) => reject(error),
-            });
+          .send(TOPIC_COMPANY_GET_BY_ID, user.currentCompany)
+          .subscribe({
+            next: (response) => resolve(response),
+            error: (error) => reject(error),
+          });
       });
       return { user, tokens };
     }
@@ -260,16 +265,20 @@ export class AuthService implements OnModuleInit {
   }
 
   async cryptPassword(password: string): Promise<ICryptPassword> {
-      const saltOrRounds = 10;
-      const salt = await bcrypt.genSalt(saltOrRounds);
-      const hash = await bcrypt.hash(password, salt);
-      return {
-        password: hash,
-        salt
-      }
-  };
+    const saltOrRounds = 10;
+    const salt = await bcrypt.genSalt(saltOrRounds);
+    const hash = await bcrypt.hash(password, salt);
+    return {
+      password: hash,
+      salt,
+    };
+  }
 
-  async comparePassword(password: string, salt: string, hashPassword): Promise<boolean> {
+  async comparePassword(
+    password: string,
+    salt: string,
+    hashPassword,
+  ): Promise<boolean> {
     const hash = await bcrypt.hash(password.trim(), salt.trim());
     return hash === hashPassword;
   }

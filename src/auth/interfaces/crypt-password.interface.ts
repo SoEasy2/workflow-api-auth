@@ -1,4 +1,4 @@
 export interface ICryptPassword {
-    password: string;
-    salt: string;
+  password: string;
+  salt: string;
 }
