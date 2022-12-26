@@ -20,6 +20,12 @@ export const TOPIC_AUTH_VERIFICATION_RESEND = 'auth.verification.resend';
 export const TOPIC_AUTH_VERIFICATION_RESEND_REPLY =
   'auth.verification.resend.reply';
 
+export const TOPIC_AUTH_REGISTER_BY_CODE = 'auth.registerByCode';
+export const TOPIC_AUTH_REGISTER_BY_CODE_REPLY = 'auth.registerByCode.reply';
+
+export const TOPIC_AUTH_DETAILS_BY_CODE_COMPANY = 'auth.detailsByCodeCompany'
+export const TOPIC_AUTH_DETAILS_BY_CODE_COMPANY_REPLY = 'auth.detailsByCodeCompany.reply'
+
 export const TOPIC_USER_CREATE = 'user.create';
 export const TOPIC_USER_FIND_BY_ID = 'user.findById';
 export const TOPIC_USER_FIND_BY_EMAIL = 'user.findByEmail';
@@ -31,3 +37,4 @@ export const TOPIC_MAILER_SEND = 'mail.send';
 
 export const TOPIC_COMPANY_CREATE = 'company.create';
 export const TOPIC_COMPANY_GET_BY_ID = 'company.get.by.id';
+export const TOPIC_COMPANY_GET_BY_CODE = 'company.getByCode';

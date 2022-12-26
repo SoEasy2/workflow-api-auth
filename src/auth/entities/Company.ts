@@ -6,6 +6,8 @@ export class Company {
   user: string;
   targetUser: Array<string>;
   amountOfEmployees: EmployeesCount;
+
+  code: string;
   createdAt: Date;
   updatedAt: Date;
 }
