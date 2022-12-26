@@ -8,7 +8,8 @@ import * as bcrypt from 'bcrypt';
 import { ClientKafka, RpcException } from '@nestjs/microservices';
 import { CreateUserDto } from './dto/create-user-dto';
 import {
-  TOPIC_COMPANY_CREATE, TOPIC_COMPANY_GET_BY_CODE,
+  TOPIC_COMPANY_CREATE,
+  TOPIC_COMPANY_GET_BY_CODE,
   TOPIC_COMPANY_GET_BY_ID,
   TOPIC_MAILER_SEND,
   TOPIC_USER_CREATE,
@@ -313,22 +314,22 @@ export class AuthService implements OnModuleInit {
   }
 
   async detailsByCodeCompany(
-      detailsUserByCompanyCodeDto: DetailsUserByCompanyCodeDto
+    detailsUserByCompanyCodeDto: DetailsUserByCompanyCodeDto,
   ): Promise<IResponseAuth> {
     const code = this.generateCode(4);
     const user = await new Promise<User>((resolve, reject) => {
       this.clientUser
-          .send(TOPIC_USER_CREATE, {
-            ...detailsUserByCompanyCodeDto,
-            codeEmail: code,
-            stepRegistration: StepConnect.CONNECT_VERIFICATION,
-            sendCodeDate: new Date(),
-            typeRegistration: TypeRegistration.REGISTRATION_BY_CODE,
-          })
-          .subscribe({
-            next: (response) => resolve(response),
-            error: (error) => reject(error),
-          });
+        .send(TOPIC_USER_CREATE, {
+          ...detailsUserByCompanyCodeDto,
+          codeEmail: code,
+          stepRegistration: StepConnect.CONNECT_VERIFICATION,
+          sendCodeDate: new Date(),
+          typeRegistration: TypeRegistration.REGISTRATION_BY_CODE,
+        })
+        .subscribe({
+          next: (response) => resolve(response),
+          error: (error) => reject(error),
+        });
     });
     await new Promise<any>((resolve, reject) => {
       this.clientUser.emit(TOPIC_MAILER_SEND, { code }).subscribe({
@@ -338,11 +339,11 @@ export class AuthService implements OnModuleInit {
     });
     user.currentCompany = await new Promise<Company>((resolve, reject) => {
       this.clientCompany
-          .send(TOPIC_COMPANY_GET_BY_ID, user.currentCompany)
-          .subscribe({
-            next: (response) => resolve(response),
-            error: (error) => reject(error),
-          });
+        .send(TOPIC_COMPANY_GET_BY_ID, user.currentCompany)
+        .subscribe({
+          next: (response) => resolve(response),
+          error: (error) => reject(error),
+        });
     });
 
     const tokens = this.jwtService.generateTokens(user);
@@ -368,13 +369,13 @@ export class AuthService implements OnModuleInit {
     return hash === hashPassword;
   }
   generateCodeCompany(length: number) {
-    let text = "";
-    const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
+    let text = '';
+    const possible =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
 
     for (let i = 0; i < length; i++)
       text += possible.charAt(Math.floor(Math.random() * possible.length));
 
     return text;
   }
-
 }

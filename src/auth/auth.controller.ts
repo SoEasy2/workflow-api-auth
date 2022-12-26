@@ -13,13 +13,17 @@ import {
   RpcException,
 } from '@nestjs/microservices';
 import {
-  TOPIC_AUTH_DETAILS, TOPIC_AUTH_DETAILS_BY_CODE_COMPANY, TOPIC_AUTH_DETAILS_BY_CODE_COMPANY_REPLY,
+  TOPIC_AUTH_DETAILS,
+  TOPIC_AUTH_DETAILS_BY_CODE_COMPANY,
+  TOPIC_AUTH_DETAILS_BY_CODE_COMPANY_REPLY,
   TOPIC_AUTH_DETAILS_REPLY,
   TOPIC_AUTH_LOGIN,
   TOPIC_AUTH_LOGIN_REPLY,
   TOPIC_AUTH_REFRESH,
   TOPIC_AUTH_REFRESH_REPLY,
-  TOPIC_AUTH_REGISTER, TOPIC_AUTH_REGISTER_BY_CODE, TOPIC_AUTH_REGISTER_BY_CODE_REPLY,
+  TOPIC_AUTH_REGISTER,
+  TOPIC_AUTH_REGISTER_BY_CODE,
+  TOPIC_AUTH_REGISTER_BY_CODE_REPLY,
   TOPIC_AUTH_REGISTER_REPLY,
   TOPIC_AUTH_VERIFICATION,
   TOPIC_AUTH_VERIFICATION_REPLY,
@@ -148,18 +152,18 @@ export class AuthController {
 
   @MessagePattern(TOPIC_AUTH_VERIFICATION)
   async verificationConnectUser(
-      @Payload() message: IKafkaMessage<VerificationUserDto>,
+    @Payload() message: IKafkaMessage<VerificationUserDto>,
   ) {
     try {
       this.appLogger.log(
-          `[AuthController][${TOPIC_AUTH_VERIFICATION}] -> [verificationUser]`,
+        `[AuthController][${TOPIC_AUTH_VERIFICATION}] -> [verificationUser]`,
       );
       return await this.authService.verificationUser(message.value);
     } catch (err) {
       this.appLogger.error(
-          err,
-          err.stack,
-          `[AuthController][${TOPIC_AUTH_VERIFICATION}] -> [verificationUser]`,
+        err,
+        err.stack,
+        `[AuthController][${TOPIC_AUTH_VERIFICATION}] -> [verificationUser]`,
       );
       throw new RpcException(JSON.stringify(err));
     }
@@ -167,7 +171,7 @@ export class AuthController {
   @EventPattern(TOPIC_AUTH_VERIFICATION_REPLY)
   async logVerificationConnectUser(): Promise<void> {
     this.appLogger.log(
-        `[AuthController][${TOPIC_AUTH_VERIFICATION}][SEND] -> [verificationUser]`,
+      `[AuthController][${TOPIC_AUTH_VERIFICATION}][SEND] -> [verificationUser]`,
     );
   }
 
@@ -243,17 +247,19 @@ export class AuthController {
   }
 
   @MessagePattern(TOPIC_AUTH_REGISTER_BY_CODE)
-  async registerByCode(@Payload() message: IKafkaMessage<string>): Promise<string> {
+  async registerByCode(
+    @Payload() message: IKafkaMessage<string>,
+  ): Promise<string> {
     try {
       this.appLogger.log(
-          `[AuthController][${TOPIC_AUTH_REGISTER_BY_CODE}] -> [registerByCode]`,
+        `[AuthController][${TOPIC_AUTH_REGISTER_BY_CODE}] -> [registerByCode]`,
       );
       return await this.authService.registerByCode(message.value);
     } catch (err) {
       this.appLogger.error(
-          err,
-          err.stack,
-          `[AuthController][${TOPIC_AUTH_REGISTER_BY_CODE}] -> [registerByCode]`,
+        err,
+        err.stack,
+        `[AuthController][${TOPIC_AUTH_REGISTER_BY_CODE}] -> [registerByCode]`,
       );
       throw new RpcException(JSON.stringify(err));
     }
@@ -261,24 +267,24 @@ export class AuthController {
   @EventPattern(TOPIC_AUTH_REGISTER_BY_CODE_REPLY)
   logRegisterByCode(): void {
     this.appLogger.log(
-        `[AuthController][${TOPIC_AUTH_REGISTER_BY_CODE}][SEND] -> [registerByCode]`,
+      `[AuthController][${TOPIC_AUTH_REGISTER_BY_CODE}][SEND] -> [registerByCode]`,
     );
   }
 
   @MessagePattern(TOPIC_AUTH_DETAILS_BY_CODE_COMPANY)
   async detailsByCodeCompany(
-      @Payload() message: IKafkaMessage<DetailsUserByCompanyCodeDto>
+    @Payload() message: IKafkaMessage<DetailsUserByCompanyCodeDto>,
   ): Promise<IResponseAuth> {
     try {
       this.appLogger.log(
-          `[AuthController][${TOPIC_AUTH_DETAILS_BY_CODE_COMPANY}] -> [detailsByCodeCompany]`,
+        `[AuthController][${TOPIC_AUTH_DETAILS_BY_CODE_COMPANY}] -> [detailsByCodeCompany]`,
       );
       return await this.authService.detailsByCodeCompany(message.value);
     } catch (err) {
       this.appLogger.error(
-          err,
-          err.stack,
-          `[AuthController][${TOPIC_AUTH_DETAILS_BY_CODE_COMPANY}] -> [detailsByCodeCompany]`,
+        err,
+        err.stack,
+        `[AuthController][${TOPIC_AUTH_DETAILS_BY_CODE_COMPANY}] -> [detailsByCodeCompany]`,
       );
       throw new RpcException(JSON.stringify(err));
     }
@@ -286,7 +292,7 @@ export class AuthController {
   @EventPattern(TOPIC_AUTH_DETAILS_BY_CODE_COMPANY_REPLY)
   logDetailsByCodeCompany(): void {
     this.appLogger.log(
-        `[AuthController][${TOPIC_AUTH_DETAILS_BY_CODE_COMPANY}][SEND] -> [detailsByCodeCompany]`,
+      `[AuthController][${TOPIC_AUTH_DETAILS_BY_CODE_COMPANY}][SEND] -> [detailsByCodeCompany]`,
     );
   }
 }
