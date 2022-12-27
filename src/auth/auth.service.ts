@@ -10,7 +10,7 @@ import { CreateUserDto } from './dto/create-user-dto';
 import {
   TOPIC_COMPANY_CREATE,
   TOPIC_COMPANY_GET_BY_CODE,
-  TOPIC_COMPANY_GET_BY_ID,
+  TOPIC_COMPANY_GET_BY_ID, TOPIC_COMPANY_UPDATE,
   TOPIC_MAILER_SEND,
   TOPIC_USER_CREATE,
   TOPIC_USER_FIND_BY_EMAIL,
@@ -49,6 +49,7 @@ export class AuthService implements OnModuleInit {
       TOPIC_COMPANY_CREATE,
       TOPIC_COMPANY_GET_BY_ID,
       TOPIC_COMPANY_GET_BY_CODE,
+      TOPIC_COMPANY_UPDATE,
     ];
     topicsUser.forEach((topic) => {
       this.clientUser.subscribeToResponseOf(topic);
@@ -337,13 +338,21 @@ export class AuthService implements OnModuleInit {
         error: (error) => reject(error),
       });
     });
-    user.currentCompany = await new Promise<Company>((resolve, reject) => {
+    const company = await new Promise<Company>((resolve, reject) => {
       this.clientCompany
         .send(TOPIC_COMPANY_GET_BY_ID, user.currentCompany)
         .subscribe({
           next: (response) => resolve(response),
           error: (error) => reject(error),
         });
+    });
+    user.currentCompany = await new Promise<Company>((resolve, reject) => {
+      this.clientCompany
+          .send(TOPIC_COMPANY_UPDATE, {...company, targetUser: [...company.targetUser, user.id]})
+          .subscribe({
+            next: (response) => resolve(response),
+            error: (error) => reject(error),
+          });
     });
 
     const tokens = this.jwtService.generateTokens(user);

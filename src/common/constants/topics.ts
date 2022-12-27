@@ -4,6 +4,9 @@ export const TOPIC_AUTH_REGISTER_REPLY = 'auth.register.reply';
 export const TOPIC_AUTH_VERIFICATION = 'auth.verification';
 export const TOPIC_AUTH_VERIFICATION_REPLY = 'auth.verification.reply';
 
+export const TOPIC_AUTH_VERIFICATION_CONNECT = 'auth.verification.connect';
+export const TOPIC_AUTH_VERIFICATION_CONNECT_REPLY = 'auth.verification.connect.reply';
+
 export const TOPIC_AUTH_VERIFY_TOKEN = 'auth.verifyToken';
 export const TOPIC_AUTH_VERIFY_TOKEN_REPLY = 'auth.verifyToken.reply';
 
@@ -39,3 +42,4 @@ export const TOPIC_MAILER_SEND = 'mail.send';
 export const TOPIC_COMPANY_CREATE = 'company.create';
 export const TOPIC_COMPANY_GET_BY_ID = 'company.get.by.id';
 export const TOPIC_COMPANY_GET_BY_CODE = 'company.getByCode';
+export const TOPIC_COMPANY_UPDATE = 'company.update';

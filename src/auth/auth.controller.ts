@@ -26,6 +26,8 @@ import {
   TOPIC_AUTH_REGISTER_BY_CODE_REPLY,
   TOPIC_AUTH_REGISTER_REPLY,
   TOPIC_AUTH_VERIFICATION,
+  TOPIC_AUTH_VERIFICATION_CONNECT,
+  TOPIC_AUTH_VERIFICATION_CONNECT_REPLY,
   TOPIC_AUTH_VERIFICATION_REPLY,
   TOPIC_AUTH_VERIFICATION_RESEND,
   TOPIC_AUTH_VERIFICATION_RESEND_REPLY,
@@ -150,28 +152,28 @@ export class AuthController {
     );
   }
 
-  @MessagePattern(TOPIC_AUTH_VERIFICATION)
+  @MessagePattern(TOPIC_AUTH_VERIFICATION_CONNECT)
   async verificationConnectUser(
     @Payload() message: IKafkaMessage<VerificationUserDto>,
   ) {
     try {
       this.appLogger.log(
-        `[AuthController][${TOPIC_AUTH_VERIFICATION}] -> [verificationUser]`,
+        `[AuthController][${TOPIC_AUTH_VERIFICATION_CONNECT}] -> [verificationConnectUser]`,
       );
-      return await this.authService.verificationUser(message.value);
+      return await this.authService.verificationConnectUser(message.value);
     } catch (err) {
       this.appLogger.error(
         err,
         err.stack,
-        `[AuthController][${TOPIC_AUTH_VERIFICATION}] -> [verificationUser]`,
+        `[AuthController][${TOPIC_AUTH_VERIFICATION_CONNECT}] -> [verificationConnectUser]`,
       );
       throw new RpcException(JSON.stringify(err));
     }
   }
-  @EventPattern(TOPIC_AUTH_VERIFICATION_REPLY)
+  @EventPattern(TOPIC_AUTH_VERIFICATION_CONNECT_REPLY)
   async logVerificationConnectUser(): Promise<void> {
     this.appLogger.log(
-      `[AuthController][${TOPIC_AUTH_VERIFICATION}][SEND] -> [verificationUser]`,
+      `[AuthController][${TOPIC_AUTH_VERIFICATION_CONNECT}][SEND] -> [verificationConnectUser]`,
     );
   }
 
