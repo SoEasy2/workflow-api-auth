@@ -4,6 +4,7 @@ import { AuthController } from './auth.controller';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { AppLogger } from '../shared/logger/logger.service';
 import { v4 as uuidv4 } from 'uuid';
+import { JwtService } from './jwt.service';
 
 @Module({
   imports: [
@@ -23,8 +24,40 @@ import { v4 as uuidv4 } from 'uuid';
         },
       },
     ]),
+    ClientsModule.register([
+      {
+        name: 'COMPANY_SERVICE',
+        transport: Transport.KAFKA,
+        options: {
+          client: {
+            clientId: 'company-service',
+            brokers: ['kafka:9092'],
+          },
+          consumer: {
+            groupId: `company-consumer-${uuidv4()}`,
+            rebalanceTimeout: 10000,
+          },
+        },
+      },
+    ]),
+    ClientsModule.register([
+      {
+        name: 'MAILER_SERVICE',
+        transport: Transport.KAFKA,
+        options: {
+          client: {
+            clientId: 'mail-service',
+            brokers: ['kafka:9092'],
+          },
+          consumer: {
+            groupId: `mailer-consumer-${uuidv4()}`,
+            rebalanceTimeout: 10000,
+          },
+        },
+      },
+    ]),
   ],
-  providers: [AuthService, AppLogger],
+  providers: [AuthService, AppLogger, JwtService],
   controllers: [AuthController],
 })
 export class AuthModule {}
