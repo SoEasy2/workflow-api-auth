@@ -5,7 +5,8 @@ export const TOPIC_AUTH_VERIFICATION = 'auth.verification';
 export const TOPIC_AUTH_VERIFICATION_REPLY = 'auth.verification.reply';
 
 export const TOPIC_AUTH_VERIFICATION_CONNECT = 'auth.verification.connect';
-export const TOPIC_AUTH_VERIFICATION_CONNECT_REPLY = 'auth.verification.connect.reply';
+export const TOPIC_AUTH_VERIFICATION_CONNECT_REPLY =
+  'auth.verification.connect.reply';
 
 export const TOPIC_AUTH_VERIFY_TOKEN = 'auth.verifyToken';
 export const TOPIC_AUTH_VERIFY_TOKEN_REPLY = 'auth.verifyToken.reply';
