@@ -30,6 +30,7 @@ import { ICryptPassword } from './interfaces/crypt-password.interface';
 import { DetailsUserByCompanyCodeDto } from './dto/details-user-by-company-code.dto';
 import { TypeRegistration } from '../shared/users/enums/typeRegistration';
 import { StepConnect } from '../common/constants/users/enums/stepConnect';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Injectable()
 export class AuthService implements OnModuleInit {
@@ -262,6 +263,7 @@ export class AuthService implements OnModuleInit {
     });
     if (!user) throw new RpcException('User not found');
     const codeCompany = this.generateCodeCompany(4);
+    console.log('comapny dto', companyDto);
     const company = await new Promise<Company>((resolve, reject) => {
       this.clientCompany
         .send(TOPIC_COMPANY_CREATE, {
@@ -275,6 +277,7 @@ export class AuthService implements OnModuleInit {
           error: (error) => reject(error),
         });
     });
+    console.log('company', company);
     const cryptPassword = await this.cryptPassword(userDto.password);
     const updatedUser = await new Promise<User>((resolve, reject) => {
       this.clientUser
@@ -358,9 +361,38 @@ export class AuthService implements OnModuleInit {
           error: (error) => reject(error),
         });
     });
-
     const tokens = this.jwtService.generateTokens(user);
     return { user, tokens };
+  }
+
+  async changePasswordUser(
+    changePasswordDto: ChangePasswordDto,
+  ): Promise<boolean> {
+    const { email, password, newPassword, id } = changePasswordDto;
+    const user = await new Promise<User>((resolve, reject) => {
+      this.clientUser.send(TOPIC_USER_FIND_BY_EMAIL, email).subscribe({
+        next: (response) => resolve(response),
+        error: (error) => reject(error),
+      });
+    });
+    if (!user) throw new RpcException('User not found');
+    const { salt, password: currentPassword } = user;
+    const isValidPassword = await this.comparePassword(
+      password,
+      salt,
+      currentPassword,
+    );
+    if (!isValidPassword) throw new RpcException('Password do not match');
+    const newGeneratePassword = this.cryptPassword(newPassword);
+    await new Promise<User>((resolve, reject) => {
+      this.clientUser
+        .send(TOPIC_USER_UPDATE, { id, ...newGeneratePassword })
+        .subscribe({
+          next: (response) => resolve(response),
+          error: (error) => reject(error),
+        });
+    });
+    return true;
   }
 
   async cryptPassword(password: string): Promise<ICryptPassword> {

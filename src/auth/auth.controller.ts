@@ -13,6 +13,8 @@ import {
   RpcException,
 } from '@nestjs/microservices';
 import {
+  TOPIC_AUTH_CHANGE_PASSWORD,
+  TOPIC_AUTH_CHANGE_PASSWORD_REPLY,
   TOPIC_AUTH_DETAILS,
   TOPIC_AUTH_DETAILS_BY_CODE_COMPANY,
   TOPIC_AUTH_DETAILS_BY_CODE_COMPANY_REPLY,
@@ -43,6 +45,7 @@ import { LoginUserDto } from './dto/login-user-dto';
 import { DetailsUserDto } from './dto/details-user-dto';
 import { User } from './entities/User';
 import { DetailsUserByCompanyCodeDto } from './dto/details-user-by-company-code.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @UseFilters(new ExceptionFilter())
 @UsePipes(new ValidationPipe({ transform: true }))
@@ -295,6 +298,31 @@ export class AuthController {
   logDetailsByCodeCompany(): void {
     this.appLogger.log(
       `[AuthController][${TOPIC_AUTH_DETAILS_BY_CODE_COMPANY}][SEND] -> [detailsByCodeCompany]`,
+    );
+  }
+
+  @MessagePattern(TOPIC_AUTH_CHANGE_PASSWORD)
+  async changePasswordUser(
+    @Payload() message: IKafkaMessage<ChangePasswordDto>,
+  ): Promise<boolean> {
+    try {
+      this.appLogger.log(
+        `[AuthController][${TOPIC_AUTH_CHANGE_PASSWORD}] -> [detailsByCodeCompany]`,
+      );
+      return await this.authService.changePasswordUser(message.value);
+    } catch (err) {
+      this.appLogger.error(
+        err,
+        err.stack,
+        `[AuthController][${TOPIC_AUTH_CHANGE_PASSWORD}] -> [changePasswordUser]`,
+      );
+      throw new RpcException(JSON.stringify(err));
+    }
+  }
+  @EventPattern(TOPIC_AUTH_CHANGE_PASSWORD_REPLY)
+  logChangePasswordUser(): void {
+    this.appLogger.log(
+      `[AuthController][${TOPIC_AUTH_CHANGE_PASSWORD}][SEND] -> [changePasswordUser]`,
     );
   }
 }
