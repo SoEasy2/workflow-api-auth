@@ -263,7 +263,6 @@ export class AuthService implements OnModuleInit {
     });
     if (!user) throw new RpcException('User not found');
     const codeCompany = this.generateCodeCompany(4);
-    console.log('comapny dto', companyDto);
     const company = await new Promise<Company>((resolve, reject) => {
       this.clientCompany
         .send(TOPIC_COMPANY_CREATE, {
@@ -277,7 +276,6 @@ export class AuthService implements OnModuleInit {
           error: (error) => reject(error),
         });
     });
-    console.log('company', company);
     const cryptPassword = await this.cryptPassword(userDto.password);
     const updatedUser = await new Promise<User>((resolve, reject) => {
       this.clientUser
