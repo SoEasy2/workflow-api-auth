@@ -31,12 +31,16 @@ export const TOPIC_AUTH_DETAILS_BY_CODE_COMPANY = 'auth.detailsByCodeCompany';
 export const TOPIC_AUTH_DETAILS_BY_CODE_COMPANY_REPLY =
   'auth.detailsByCodeCompany.reply';
 
+export const TOPIC_AUTH_CHANGE_PASSWORD = 'auth.changePassword';
+export const TOPIC_AUTH_CHANGE_PASSWORD_REPLY = 'auth.changePassword.reply';
+
 export const TOPIC_USER_CREATE = 'user.create';
 export const TOPIC_USER_FIND_BY_ID = 'user.findById';
 export const TOPIC_USER_FIND_BY_EMAIL = 'user.findByEmail';
 export const TOPIC_USER_CHECK_PASSWORD = 'user.checkPassword';
 export const TOPIC_USER_UPDATE = 'user.update';
 export const TOPIC_USER_FIND_BY_EMAIL_OR_PHONE = 'user.findByEmailOrPhone';
+export const TOPIC_PERMISSIONS_CREATE = 'permissions.create';
 
 export const TOPIC_MAILER_SEND = 'mail.send';
 
