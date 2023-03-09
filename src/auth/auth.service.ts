@@ -13,6 +13,7 @@ import {
   TOPIC_COMPANY_GET_BY_ID,
   TOPIC_COMPANY_UPDATE,
   TOPIC_MAILER_SEND,
+  TOPIC_PERMISSIONS_CREATE,
   TOPIC_USER_CREATE,
   TOPIC_USER_FIND_BY_EMAIL,
   TOPIC_USER_FIND_BY_EMAIL_OR_PHONE,
@@ -31,6 +32,8 @@ import { DetailsUserByCompanyCodeDto } from './dto/details-user-by-company-code.
 import { TypeRegistration } from '../shared/users/enums/typeRegistration';
 import { StepConnect } from '../common/constants/users/enums/stepConnect';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { Permission } from './entities/Permissions';
+import { Permissions } from '../shared/permission/enums/permissions';
 
 @Injectable()
 export class AuthService implements OnModuleInit {
@@ -46,6 +49,7 @@ export class AuthService implements OnModuleInit {
       TOPIC_USER_FIND_BY_EMAIL,
       TOPIC_USER_UPDATE,
       TOPIC_USER_FIND_BY_EMAIL_OR_PHONE,
+      TOPIC_PERMISSIONS_CREATE,
     ];
     const topicsCompany: Array<string> = [
       TOPIC_COMPANY_CREATE,
@@ -277,19 +281,33 @@ export class AuthService implements OnModuleInit {
         });
     });
     const cryptPassword = await this.cryptPassword(userDto.password);
-    const updatedUser = await new Promise<User>((resolve, reject) => {
-      this.clientUser
-        .send(TOPIC_USER_UPDATE, {
-          ...userDto,
-          ...cryptPassword,
-          stepRegistration: StepRegistration.COMPLETE,
-          currentCompany: company.id,
-        })
-        .subscribe({
-          next: (response) => resolve(response),
-          error: (error) => reject(error),
-        });
-    });
+    const [updatedUser] = await Promise.all([
+      new Promise<User>((resolve, reject) => {
+        this.clientUser
+          .send(TOPIC_USER_UPDATE, {
+            ...userDto,
+            ...cryptPassword,
+            stepRegistration: StepRegistration.COMPLETE,
+            currentCompany: company.id,
+          })
+          .subscribe({
+            next: (response) => resolve(response),
+            error: (error) => reject(error),
+          });
+      }),
+      new Promise<Permission>((resolve, reject) => {
+        this.clientUser
+          .send(TOPIC_PERMISSIONS_CREATE, {
+            userId: user.id,
+            company: company.id,
+            permission: Permissions.FOUNDER,
+          })
+          .subscribe({
+            next: (response) => resolve(response),
+            error: (error) => reject(error),
+          });
+      }),
+    ]);
     return { ...updatedUser, currentCompany: company };
   }
 
@@ -334,12 +352,26 @@ export class AuthService implements OnModuleInit {
           error: (error) => reject(error),
         });
     });
-    await new Promise<any>((resolve, reject) => {
-      this.clientUser.emit(TOPIC_MAILER_SEND, { code }).subscribe({
-        next: (response) => resolve(response),
-        error: (error) => reject(error),
-      });
-    });
+    await Promise.all([
+      new Promise<any>((resolve, reject) => {
+        this.clientUser.emit(TOPIC_MAILER_SEND, { code }).subscribe({
+          next: (response) => resolve(response),
+          error: (error) => reject(error),
+        });
+      }),
+      new Promise<Permission>((resolve, reject) => {
+        this.clientUser
+          .send(TOPIC_PERMISSIONS_CREATE, {
+            userId: user.id,
+            company: user.currentCompany,
+            permission: Permissions.MEMBER,
+          })
+          .subscribe({
+            next: (response) => resolve(response),
+            error: (error) => reject(error),
+          });
+      }),
+    ]);
     const company = await new Promise<Company>((resolve, reject) => {
       this.clientCompany
         .send(TOPIC_COMPANY_GET_BY_ID, user.currentCompany)

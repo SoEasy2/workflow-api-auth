@@ -40,6 +40,7 @@ export const TOPIC_USER_FIND_BY_EMAIL = 'user.findByEmail';
 export const TOPIC_USER_CHECK_PASSWORD = 'user.checkPassword';
 export const TOPIC_USER_UPDATE = 'user.update';
 export const TOPIC_USER_FIND_BY_EMAIL_OR_PHONE = 'user.findByEmailOrPhone';
+export const TOPIC_PERMISSIONS_CREATE = 'permissions.create';
 
 export const TOPIC_MAILER_SEND = 'mail.send';
 
